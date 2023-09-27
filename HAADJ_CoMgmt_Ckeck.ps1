@@ -46,44 +46,79 @@ $notify.Show($ToastXml)
 #Execution du script
 While($Continue) {
 
-    Start-Sleep -s 600
+    Start-Sleep -s 300
     
     #Verification des certificats
-    $CertDetailP2PAccess = Get-ChildItem -Path 'Cert:\LocalMachine\My' –Recurse
-    $CertDetailP2PAccess | Select-Object @{n="Issuer";e={(($_.Issuer -split ",") |? {$_ -like "CN=*"}) -replace "CN="}}
-    $ResultCertDetailP2PAccess = If ($CertDetailP2PAccess -like "*P2P-Access*") {"Yes"}else{"No"}
-    
-    $CertDetailOrgAccess = Get-ChildItem -Path 'Cert:\LocalMachine\My' –Recurse
-    $CertDetailOrgAccess | Select-Object @{n="Issuer";e={(($_.Issuer -split ",") |? {$_ -like "CN=*"}) -replace "CN="}}
-    $ResultCertDetailOrgAccess = if ($CertDetailOrgAccess -like "*Organization-Access*") {"Yes"}else{"No"}
+    try {
+    $CertDetailMS = Get-ChildItem -Path 'Cert:\LocalMachine\My' –Recurse
+    $CertDetailMS | Select-Object @{n="Issuer";e={(($_.Issuer -split ",") |? {$_ -like "CN=*"}) -replace "CN="}}
+    $CertDetailMSOrganization = ($CertDetailMS -like "*MS-Organization*").count
+    Write-Host "Vérification de la présence des certificats MS-Organization" -ForegroundColor Green
+    if ($CertDetailMSOrganization -eq '2')
+        {
+        $ResultCertDetailMSOrganization = "Yes"
+        }
+    else
+        {
+        $ResultCertDetailMSOrganization = "No"
+        }
+    }
+    catch
+    {
+        Write-Host "Impossible de verifier la présence des certificats MS-Organization" -ForegroundColor Red
+    }
     
     #Device Domain Join verification
+	try {
     $AD = $Domain | Where-Object {$_ -like "*DomainJoined : Yes*"}
     $ResultAD = if ($AD) {"Yes"}else{"No"}
+	Write-Host "Verification de la connectivité à l'AzureAD" -ForegroundColor Green
+	}
+	catch
+	{
+		Write-Host " " -ForegroundColor	Red
+	}
     
     #Search Device Azure AD Joined
+	try {
     $AAD = $Domain | Where-Object {$_ -like "*AzureAdJoined : Yes*"}
     $ResultAAD = if ($AAD) {"Yes"}else{"No"}
-    #if ($ResultAAD -ne 'Yes')
+	Write-Host "Verification de la connectivité à l'AzureAD" -ForegroundColor Green
+	    #if ($ResultAAD -ne 'Yes')
     #{
         #Start-ScheduledTask "\Microsoft\Windows\Workplace Join\Automatic-Device-Join"
     #}
+	}
+	catch
+	{
+		Write-Host "Impossible de verifier la connectivité à l'AzureAD" -ForegroundColor Red
+	}
+
     
     #Verification de l'existance de la cle JoinInfo
+	try {
     $JoinInfo = Test-Path -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CloudDomainJoin\JoinInfo"
+	Write-Host	"Récupération de la valeur de registre JoinInfo" -ForegroundColor Green
     if ($JoinInfo -eq "True")
-    {
+		{
         $RJoinInfo = "Yes"
-    }
+		}
     else 
-    {
+		{
         $RJoinInfo = "No"    
+		}
     }
-    
+	catch
+	{
+		Write-Host	"Récupération de la valeur de registre JoinInfo" -ForegroundColor Red
+	}
+	
     #Verification de l'existance de la cle DeviceClientID
+	try {
     $regKeyPath01 = "HKLM:\\SOFTWARE\Microsoft\Provisioning\OMADM\MDMDeviceID"
     $regValueName01 = "DeviceClientId"
     $DeviceClientID = (Get-Item $regKeyPath01 -EA Ignore).Property -contains $regValueName01
+	Write-Host	"Récupération de la valeur de registre DeviceID" -ForegroundColor Green
     if ($DeviceClientID -eq "True")
     {
         $RDeviceClientID = "Yes"
@@ -92,46 +127,81 @@ While($Continue) {
     {
         $RDeviceClientID = "No"    
     }
+	}
+	catch
+	{
+		Write-Host	"Impossible de récupérer les informations de la clé de registre DeviceID" -ForegroundColor Red
+	}	
     
     #Verification de l'agent SCCM
+	try {
     $SCCMService = (Get-Service -Name CcmExec).Status
+	Write-Host	"Récupération du status du certificat Intune" -ForegroundColor Green
     if ($SCCMService -eq "Running")
-    {
+		{
         $RSCCMService = "Yes"
-    }
+		}
     else 
-    {
+		{
         $RSCCMService = "No"  
+		}
     }
-    
+	catch
+	{
+		Write-Host	"Impossible de récupérer " -ForegroundColor Red
+	}
+	
     #Verification gestion Microsoft Intune
+	try {
     $INTUNEService = (Get-Service -Name IntuneManagementExtension).Status
+	Write-Host	"Recuperation du status de certificat Intune" -ForegroundColor Green
     if ($INTUNEService -eq "Running")
-    {
+		{
         $RIntuneService = "Yes"
-    }
+		}
     else 
-    {
+		{
         $RIntuneService = "No"  
+		}
     }
-    
+	catch
+	{
+		Write-Host " Impossible de récupérer l'etat du service MS Intune" -ForegroundColor Red
+	}	
+	
     #Verification de la presence du certificat MS Intune
+	try {
     $CertDetailIntune = Get-ChildItem -Path 'Cert:\LocalMachine\My' –Recurse
+	Write-Host	"Recuperation du status de certificat Intune" -ForegroundColor Green
     $CertDetailIntune | Select-Object @{n="Issuer";e={(($_.Issuer -split ",") |? {$_ -like "CN=*"}) -replace "CN="}}
     $ResultCertDetailIntune = if ($CertDetailIntune -like "*Intune*") {"Yes"}else{"No"}
-    
+    }
+	catch
+	{
+		Write-host "Impossible de récupérer le status de l'antispyware" -ForegroundColor Red
+	}
+	
     #Verification Windows Defender
+	try {
     $ED01 = (Get-MpComputerStatus).AntispywareEnabled
-    if ($ED01 -eq "True")
-    {
-        $RED01 = "Yes"
-    }
+	Write-Host	"Recuperation du status de l'antispyware" -ForegroundColor Green
+		if ($ED01 -eq "True")
+		{
+			$RED01 = "Yes"
+		}
     else 
+		{
+			$RED01 = "No"    
+		}
+	}
+	catch
     {
-        $RED01 = "No"    
+        Write-Host "Impossible de récupérer le status de l'antispyware" -ForegroundColor Red
     }
     
+	try {
     $ED02 = (Get-MpComputerStatus).AntivirusEnabled
+	Write-Host "Récupération du status de l'antivirus" -ForegroundColor Green
     if ($ED02 -eq "True")
     {
         $RED02 = "Yes"
@@ -140,8 +210,15 @@ While($Continue) {
     {
         $RED02 = "No"   
     }
+	}
+		catch
+    {
+        Write-Host "Impossible de récupérer le status de l'antivirus" -ForegroundColor Red
+    }
     
+	try {
     $ED03 = (Get-MpComputerStatus).OnAccessProtectionEnabled
+	Write-Host "Récupération du status OnAccessProtectionEnabled" -ForegroundColor Green
     if ($ED03 -eq "True")
     {
         $RED03 = "Yes"
@@ -150,8 +227,15 @@ While($Continue) {
     {
         $RED03 = "No"    
     }
-    
+    }
+		catch
+    {
+        Write-Host "Impossible de récupérer le status du module OnAccessProtectionEnabled" -ForegroundColor Red
+    }
+	
+	try {
     $ED04 = (Get-MpComputerStatus).RealTimeProtectionEnabled
+	Write-Host "Récupération du status du module Real Time Protection" -ForegroundColor Green
     if ($ED04 -eq "True")
     {
         $RED04 = "Yes"
@@ -160,8 +244,15 @@ While($Continue) {
     {
         $RED04 = "Yes"    
     }
-    
+    }
+	catch
+    {
+        Write-Host "Impossible de récupérer le status du module Real Time Protection" -ForegroundColor Red
+    }
+	
+	try {
     $ED05 = (Get-MpComputerStatus).TamperProtectionSource
+	Write-Host "Récupération du status du TamperProtectionSource" -ForegroundColor Green
     if ($ED05 -eq "Intune")
     {
         $RED05 = "Yes"
@@ -170,9 +261,16 @@ While($Continue) {
     {
         $RED05 = "No"  
     }
-       
+    }
+	catch
+    {
+        Write-Host "Impossible de récupérer le status du TamperProtectionSource" -ForegroundColor Red
+    }
+	
     #Verification Windows Firewall
+	try {
     $fw = Get-NetFirewallRule -PolicyStore ActiveStore -PolicyStoreSource MDM | Sort-Object DisplayName | Select-Object Name
+	Write-Host "Récupération du status du Firewall" -ForegroundColor Green
     $fwrule = $fw.Count
     if ($fwrule -ge "85")
     {
@@ -182,10 +280,14 @@ While($Continue) {
     {
         $Resultfw = 'No'
     }
+	}
+	catch
+	{
+        Write-Host "Impossible de récupérer le status du Firewall" -ForegroundColor Red
+    }
 
-    
     #Check HAADJ
-    If ($ResultAD -eq 'Yes' -AND $ResultAAD -eq 'Yes' -AND $RJoinInfo -eq 'Yes' -AND $RDeviceClientID -eq 'Yes' -AND $ResultCertDetailP2PAccess -eq 'Yes' -AND $ResultCertDetailOrgAccess -eq 'Yes')
+    If ($ResultAD -eq 'Yes' -AND $ResultAAD -eq 'Yes' -AND $RJoinInfo -eq 'Yes' -AND $RDeviceClientID -eq 'Yes' -AND $ResultCertDetailMSOrganization -eq 'Yes')
     {
         $HAADJ = 'Yes'
     }
@@ -217,8 +319,7 @@ While($Continue) {
     #Report
     $report = New-Object psobject
     $report | Add-Member -MemberType NoteProperty -name "Date" -Value "$($Date)"
-    $report | Add-Member -MemberType NoteProperty -name "Certificat P2P Access" -Value $ResultCertDetailP2PAccess
-    $report | Add-Member -MemberType NoteProperty -name "Certificat Organization-Access" -Value $ResultCertDetailOrgAccess
+    $report | Add-Member -MemberType NoteProperty -name "Certificat P2P Access" -Value $ResultCertDetailMSOrganization
     $report | Add-Member -MemberType NoteProperty -name "Device connecte au domaine" -Value $ResultAD
     $report | Add-Member -MemberType NoteProperty -name "Device connecte a Azure AD" -Value $ResultAAD
     $report | Add-Member -MemberType NoteProperty -name "Cle de registre JoinInfo" -Value $RJoinInfo 
@@ -243,7 +344,7 @@ If ($HAADJ -eq 'Yes' -and $CoMgnt -eq 'Yes' -and $WinDef -eq 'Yes')
 
     {
 
-    balloon "ClientName - Information" "Votre poste $Devicename est prêt !" 5000
+    balloon "Client - Information" "Votre poste $Devicename est prêt !" 5000
     ($Continue = $false)
 
     }
