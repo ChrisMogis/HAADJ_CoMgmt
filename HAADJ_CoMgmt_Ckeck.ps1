@@ -46,7 +46,7 @@ $notify.Show($ToastXml)
 #Execution du script
 While($Continue) {
 
-    Start-Sleep -s 300
+    Start-Sleep -s 5
     
     #Verification des certificats
     try {
@@ -72,11 +72,11 @@ While($Continue) {
 	try {
     $AD = $Domain | Where-Object {$_ -like "*DomainJoined : Yes*"}
     $ResultAD = if ($AD) {"Yes"}else{"No"}
-	Write-Host "Verification de la connectivité à l'AzureAD" -ForegroundColor Green
+	Write-Host "Verification de la connectivité à l'AD" -ForegroundColor Green
 	}
 	catch
 	{
-		Write-Host " " -ForegroundColor	Red
+		Write-Host "Ordinateur non connecté à l'AD" -ForegroundColor	Red
 	}
     
     #Search Device Azure AD Joined
@@ -110,7 +110,7 @@ While($Continue) {
     }
 	catch
 	{
-		Write-Host	"Récupération de la valeur de registre JoinInfo" -ForegroundColor Red
+		Write-Host	"Impossible de récupérer les informations de la valeur de registre JoinInfo" -ForegroundColor Red
 	}
 	
     #Verification de l'existance de la cle DeviceClientID
@@ -136,7 +136,7 @@ While($Continue) {
     #Verification de l'agent SCCM
 	try {
     $SCCMService = (Get-Service -Name CcmExec).Status
-	Write-Host	"Récupération du status du certificat Intune" -ForegroundColor Green
+	Write-Host	"Récupération du status du service SCCM" -ForegroundColor Green
     if ($SCCMService -eq "Running")
 		{
         $RSCCMService = "Yes"
@@ -148,13 +148,13 @@ While($Continue) {
     }
 	catch
 	{
-		Write-Host	"Impossible de récupérer " -ForegroundColor Red
+		Write-Host	"Impossible de récupérer le status du service SCCM " -ForegroundColor Red
 	}
 	
     #Verification gestion Microsoft Intune
 	try {
     $INTUNEService = (Get-Service -Name IntuneManagementExtension).Status
-	Write-Host	"Recuperation du status de certificat Intune" -ForegroundColor Green
+	Write-Host	"Recuperation du status du service MS Intune" -ForegroundColor Green
     if ($INTUNEService -eq "Running")
 		{
         $RIntuneService = "Yes"
@@ -172,9 +172,9 @@ While($Continue) {
     #Verification de la presence du certificat MS Intune
 	try {
     $CertDetailIntune = Get-ChildItem -Path 'Cert:\LocalMachine\My' –Recurse
-	Write-Host	"Recuperation du status de certificat Intune" -ForegroundColor Green
     $CertDetailIntune | Select-Object @{n="Issuer";e={(($_.Issuer -split ",") |? {$_ -like "CN=*"}) -replace "CN="}}
     $ResultCertDetailIntune = if ($CertDetailIntune -like "*Intune*") {"Yes"}else{"No"}
+    Write-Host	"Recuperation du status de certificat Intune" -ForegroundColor Green
     }
 	catch
 	{
@@ -319,7 +319,7 @@ While($Continue) {
     #Report
     $report = New-Object psobject
     $report | Add-Member -MemberType NoteProperty -name "Date" -Value "$($Date)"
-    $report | Add-Member -MemberType NoteProperty -name "Certificat P2P Access" -Value $ResultCertDetailMSOrganization
+    $report | Add-Member -MemberType NoteProperty -name "Certificat MS-Organization" -Value $ResultCertDetailMSOrganization
     $report | Add-Member -MemberType NoteProperty -name "Device connecte au domaine" -Value $ResultAD
     $report | Add-Member -MemberType NoteProperty -name "Device connecte a Azure AD" -Value $ResultAAD
     $report | Add-Member -MemberType NoteProperty -name "Cle de registre JoinInfo" -Value $RJoinInfo 
@@ -344,7 +344,7 @@ If ($HAADJ -eq 'Yes' -and $CoMgnt -eq 'Yes' -and $WinDef -eq 'Yes')
 
     {
 
-    balloon "Client - Information" "Votre poste $Devicename est prêt !" 5000
+    balloon "CAGIP - Information" "Votre poste $Devicename est prêt !" 5000
     ($Continue = $false)
 
     }
