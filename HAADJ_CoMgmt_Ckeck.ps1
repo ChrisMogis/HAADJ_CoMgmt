@@ -356,7 +356,7 @@ If ($HAADJ -eq 'Yes' -and $CoMgnt -eq 'Yes' -and $WinDef -eq 'Yes')
 
     {
 
-    balloon "CAGIP - Information" "Votre poste $Devicename est prêt !" 5000
+    balloon "Client - Information" "Votre poste $Devicename est prêt !" 5000
     ($Continue = $false)
 
     }
