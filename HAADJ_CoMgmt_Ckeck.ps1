@@ -1,7 +1,7 @@
 <#
 .DESCRIPTION
 .NOTES
-    Version       : 0.0.1
+    Version       : 0.1.0
     Author        : Christopher Mogis
     Creation Date : 15/09/2023
 #>
@@ -181,6 +181,17 @@ While($Continue) {
 		Write-host "Impossible de récupérer le status de l'antispyware" -ForegroundColor Red
 	}
 	
+	#Verification du status Azure PRT
+	try{
+	$AADPRT = $Domain | Where-Object {$_ -like "*AzureAdPrt : YES*"}
+    $ResultAADPRT = if ($AADPRT) {"Yes"}else{"No"}
+	Write-Host "Verification du status d'Azure PRT" -ForegroundColor Green
+    }
+	catch
+	{
+		Write-Host "Status d'Azure PRT incorrect" -ForegroundColor	Red
+	}
+	
     #Verification Windows Defender
 	try {
     $ED01 = (Get-MpComputerStatus).AntispywareEnabled
@@ -287,7 +298,7 @@ While($Continue) {
     }
 
     #Check HAADJ
-    If ($ResultAD -eq 'Yes' -AND $ResultAAD -eq 'Yes' -AND $RJoinInfo -eq 'Yes' -AND $RDeviceClientID -eq 'Yes' -AND $ResultCertDetailMSOrganization -eq 'Yes')
+    If ($ResultAD -eq 'Yes' -AND $ResultAAD -eq 'Yes' -AND $RJoinInfo -eq 'Yes' -AND $RDeviceClientID -eq 'Yes' -AND $ResultCertDetailMSOrganization -eq 'Yes' -AND $ResultAADPRT -eq 'Yes')
     {
         $HAADJ = 'Yes'
     }
@@ -326,7 +337,8 @@ While($Continue) {
     $report | Add-Member -MemberType NoteProperty -name "Cle de registre DeviceClientID" -Value $RDeviceClientID
     $report | Add-Member -MemberType NoteProperty -name "Etat Service SCCM" -Value $RSCCMService 
     $report | Add-Member -MemberType NoteProperty -name "Etat Microsoft Intune" -Value $RIntuneService
-    $report | Add-Member -MemberType NoteProperty -name "Certificat MS Intune" -Value $ResultCertDetailIntune 
+    $report | Add-Member -MemberType NoteProperty -name "Certificat MS Intune" -Value $ResultCertDetailIntune
+	$report | Add-Member -MemberType NoteProperty -name "AzureAD PRT" -Value $ResultAADPRT
     $report | Add-Member -MemberType NoteProperty -name "Module Antispyware actif" -Value $RED01
     $report | Add-Member -MemberType NoteProperty -name "Module antivirus actif" -Value $RED02
     $report | Add-Member -MemberType NoteProperty -name "Module OnAccessProtectionEnabled configure" -Value $RED03
