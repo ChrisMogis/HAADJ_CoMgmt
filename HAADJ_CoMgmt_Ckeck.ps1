@@ -67,7 +67,7 @@ While($Continue) {
     $Domain = dsregcmd /status
     
     #Verification des certificats
-    $CertDetailMS = Get-ChildItem -Path 'Cert:\LocalMachine\My' –Recurse
+    $CertDetailMS = Get-ChildItem -Path 'Cert:\LocalMachine\My' -Recurse
     $CertDetailMS | Select-Object @{n="Issuer";e={(($_.Issuer -split ",") |? {$_ -like "CN=*"}) -replace "CN="}}
     $CertDetailMSOrganization = ($CertDetailMS -like "*MS-Organization*").count
     #Write-Host "Vérification de la présence des certificats MS-Organization" -ForegroundColor Yellow
@@ -142,7 +142,7 @@ While($Continue) {
 	
     #Verification de la presence du certificat MS Intune
     #Write-Host	"Recuperation du status de certificat Intune" -ForegroundColor Yellow
-    $CertDetailIntune = Get-ChildItem -Path 'Cert:\LocalMachine\My' –Recurse
+    $CertDetailIntune = Get-ChildItem -Path 'Cert:\LocalMachine\My' -Recurse
     $CertDetailIntune | Select-Object @{n="Issuer";e={(($_.Issuer -split ",") |? {$_ -like "CN=*"}) -replace "CN="}}
     $ResultCertDetailIntune = if ($CertDetailIntune -like "*Intune*") {"Yes"}else{"No"}
 	
