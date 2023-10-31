@@ -20,7 +20,7 @@
 #Declaration des variables
 $DeviceName = $(Get-WmiObject Win32_Computersystem).name
 $logfilepath = "C:\Temp\HAADJ_CoMan_$Devicename.csv"
-$LogShare = "\\wp063nas0001.commun01.svc\logpdt$\Mowe_Logs_Compliance_Script"
+$LogShare = "\\nas.domain.lan\Share$\Logs_Compliance_Script"
 $Continue = $True
 
 #Declaration de la fonction Toast
@@ -167,7 +167,7 @@ While($Continue) {
     $wscsvcService = Get-Service wscsvc
     $wscsvcServiceStatus = ($wscsvcService).Status
     if ($wscsvcServiceStatus -eq 'Running') {$RwscsvcServiceService = "Yes"}else{$RwscsvcServiceService = "No"}
-	
+
     #Verification Windows Firewall
     $fw = Get-NetFirewallRule -PolicyStore ActiveStore -PolicyStoreSource MDM | Sort-Object DisplayName | Select-Object Name
 	#Write-Host "Récupération du status du Firewall" -ForegroundColor Yellow
