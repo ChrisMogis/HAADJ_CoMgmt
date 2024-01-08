@@ -75,7 +75,7 @@ While($Continue) {
 
     #JoinInfo registry key verification
     $JoinInfo = Test-Path -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CloudDomainJoin\JoinInfo"
-	Write-Host	"Récupération de la valeur de registre JoinInfo" -ForegroundColor Yellow
+	Write-Host	"Check JoinInfo registry key" -ForegroundColor Yellow
     if ($JoinInfo -eq "True")
 		{
         $RJoinInfo = "Yes"
@@ -89,7 +89,7 @@ While($Continue) {
     $regKeyPath01 = "HKLM:\\SOFTWARE\Microsoft\Provisioning\OMADM\MDMDeviceID"
     $regValueName01 = "DeviceClientId"
     $DeviceClientID = (Get-Item $regKeyPath01 -EA Ignore).Property -contains $regValueName01
-	Write-Host	"Récupération de la valeur de registre DeviceID" -ForegroundColor Yellow
+	Write-Host	"Check DeviceID registry key" -ForegroundColor Yellow
     if ($DeviceClientID -eq "True")
     {
         $RDeviceClientID = "Yes"
@@ -101,7 +101,7 @@ While($Continue) {
     
     #Check SCCM Agent
     $SCCMService = (Get-Service -Name CcmExec).Status
-	Write-Host	"Récupération du status du service SCCM" -ForegroundColor Yellow
+	Write-Host	"Check SCCM Service status" -ForegroundColor Yellow
     if ($SCCMService -eq "Running")
 		{
         $RSCCMService = "Yes"
@@ -113,7 +113,7 @@ While($Continue) {
 	
     #Check Microsoft Intune service
     $INTUNEService = (Get-Service -Name IntuneManagementExtension).Status
-	Write-Host	"Recuperation du status du service MS Intune" -ForegroundColor Yellow
+	Write-Host	"Check MS Intune service" -ForegroundColor Yellow
     if ($INTUNEService -eq "Running")
 		{
         $RIntuneService = "Yes"
@@ -124,13 +124,13 @@ While($Continue) {
 		}
 	
     #Check MS Intune certificate
-    Write-Host	"Recuperation du status de certificat Intune" -ForegroundColor Yellow
+    Write-Host	"Check MS Intune certificate" -ForegroundColor Yellow
     $CertDetailIntune = Get-ChildItem -Path 'Cert:\LocalMachine\My' –Recurse
     $CertDetailIntune | Select-Object @{n="Issuer";e={(($_.Issuer -split ",") |? {$_ -like "CN=*"}) -replace "CN="}}
     $ResultCertDetailIntune = if ($CertDetailIntune -like "*Intune*") {"Yes"}else{"No"}
 	
 	#Verification du status Azure PRT
-    Write-Host "Verification du status d'Azure PRT" -ForegroundColor Yellow
+    Write-Host "Check Azure PRT Status" -ForegroundColor Yellow
 	$AADPRT = $Domain | Where-Object {$_ -like "*AzureAdPrt : YES*"}
     $ResultAADPRT = if ($AADPRT) {"Yes"}else{"No"}
 
@@ -160,15 +160,15 @@ While($Continue) {
     $report = New-Object psobject
     $report | Add-Member -MemberType NoteProperty -name "Date" -Value "$($Date)"
     $report | Add-Member -MemberType NoteProperty -name "Certificat MS Organization" -Value $ResultCertDetailMSOrganization
-    $report | Add-Member -MemberType NoteProperty -name "Device connected to AD Domain" -Value $ResultAD
-    $report | Add-Member -MemberType NoteProperty -name "Device connected to Azure AD" -Value $ResultAAD
-    $report | Add-Member -MemberType NoteProperty -name "Registry Key JoinInfo" -Value $RJoinInfo 
-    $report | Add-Member -MemberType NoteProperty -name "Registry key DeviceClientID" -Value $RDeviceClientID
-    $report | Add-Member -MemberType NoteProperty -name "SCCM service Status" -Value $RSCCMService 
-    $report | Add-Member -MemberType NoteProperty -name "Microsoft Intune Service Status" -Value $RIntuneService
-    $report | Add-Member -MemberType NoteProperty -name "Check MS Intune certificate" -Value $ResultCertDetailIntune 
-    $report | Add-Member -MemberType NoteProperty -name "HAADJ Configuration" -Value $HAADJ
-    $report | Add-Member -MemberType NoteProperty -name "CoManagement State" -Value $CoMgnt 
+    $report | Add-Member -MemberType NoteProperty -name "Device connecte au domaine" -Value $ResultAD
+    $report | Add-Member -MemberType NoteProperty -name "Device connecte a Azure AD" -Value $ResultAAD
+    $report | Add-Member -MemberType NoteProperty -name "Cle de registre JoinInfo" -Value $RJoinInfo 
+    $report | Add-Member -MemberType NoteProperty -name "Cle de registre DeviceClientID" -Value $RDeviceClientID
+    $report | Add-Member -MemberType NoteProperty -name "Etat Service SCCM" -Value $RSCCMService 
+    $report | Add-Member -MemberType NoteProperty -name "Etat Microsoft Intune" -Value $RIntuneService
+    $report | Add-Member -MemberType NoteProperty -name "Certificat MS Intune" -Value $ResultCertDetailIntune 
+    $report | Add-Member -MemberType NoteProperty -name "Configuration HAADJ" -Value $HAADJ
+    $report | Add-Member -MemberType NoteProperty -name "CoManagement SCCM Intune" -Value $CoMgnt 
     $report | export-csv -NoTypeInformation -Path $logfilepath -Delimiter ";" -Append
 
 #Notification pour l'admin
