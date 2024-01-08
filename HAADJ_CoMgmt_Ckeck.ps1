@@ -159,13 +159,13 @@ While($Continue) {
     #Report
     $report = New-Object psobject
     $report | Add-Member -MemberType NoteProperty -name "Date" -Value "$($Date)"
-	$report | Add-Member -MemberType NoteProperty -name "Device connecte au domaine" -Value $ResultAD
-	$report | Add-Member -MemberType NoteProperty -name "Etat Service SCCM" -Value $RSCCMService 
+    $report | Add-Member -MemberType NoteProperty -name "Device connecte au domaine" -Value $ResultAD
+    $report | Add-Member -MemberType NoteProperty -name "Etat Service SCCM" -Value $RSCCMService 
     $report | Add-Member -MemberType NoteProperty -name "Certificat MS Organization" -Value $ResultCertDetailMSOrganization
     $report | Add-Member -MemberType NoteProperty -name "Device connecte a Azure AD" -Value $ResultAAD
     $report | Add-Member -MemberType NoteProperty -name "Cle de registre JoinInfo" -Value $RJoinInfo 
     $report | Add-Member -MemberType NoteProperty -name "Cle de registre DeviceClientID" -Value $RDeviceClientID
-	$report | Add-Member -MemberType NoteProperty -name "Certificat MS Intune" -Value $ResultCertDetailIntune 
+    $report | Add-Member -MemberType NoteProperty -name "Certificat MS Intune" -Value $ResultCertDetailIntune 
     $report | Add-Member -MemberType NoteProperty -name "Etat Microsoft Intune" -Value $RIntuneService
     $report | Add-Member -MemberType NoteProperty -name "Configuration HAADJ" -Value $HAADJ
     $report | Add-Member -MemberType NoteProperty -name "CoManagement SCCM Intune" -Value $CoMgnt 
