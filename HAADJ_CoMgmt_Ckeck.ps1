@@ -6,12 +6,12 @@
     Creation Date : 10/10/2023
 #>
 
-#Declaration des variables
+#Variables
 $DeviceName = $(Get-WmiObject Win32_Computersystem).name
 $logfilepath = "C:\Temp\HAADJ_CoMan_$Devicename.csv"
 $Continue = $True
 
-#Declaration de la fonction Toast
+#function Toast Notification
 function balloon([string]$Titre, [string]$Texte, [int]$duree){ 
 
 $app = "{D65231B0-B2F1-4857-A4CE-A8E7C6EA7D27}\WindowsPowerShell\v1.0\PowerShell.exe"
@@ -40,7 +40,7 @@ $notify = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifi
 $notify.Show($ToastXml)
 }
 
-#Execution du script
+#Script execution
 While($Continue) {
 
     Start-Sleep -s 5
@@ -49,7 +49,7 @@ While($Continue) {
     $Date = Get-Date
     $Domain = dsregcmd /status
     
-    #Verification des certificats
+    #Check certificates
     $CertDetailMS = Get-ChildItem -Path 'Cert:\LocalMachine\My' –Recurse
     $CertDetailMS | Select-Object @{n="Issuer";e={(($_.Issuer -split ",") |? {$_ -like "CN=*"}) -replace "CN="}}
     $CertDetailMSOrganization = ($CertDetailMS -like "*MS-Organization*").count
@@ -73,7 +73,7 @@ While($Continue) {
     $ResultAAD = if ($AAD) {"Yes"}else{"No"}
 	Write-Host "Verification de la connectivité à l'AzureAD" -ForegroundColor Yellow
 
-    #Verification de l'existance de la cle JoinInfo
+    #JoinInfo registry key verification
     $JoinInfo = Test-Path -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CloudDomainJoin\JoinInfo"
 	Write-Host	"Récupération de la valeur de registre JoinInfo" -ForegroundColor Yellow
     if ($JoinInfo -eq "True")
@@ -85,7 +85,7 @@ While($Continue) {
         $RJoinInfo = "No"
 		}
 	
-    #Verification de l'existance de la cle DeviceClientID
+    #DeviceClientID registry key verification
     $regKeyPath01 = "HKLM:\\SOFTWARE\Microsoft\Provisioning\OMADM\MDMDeviceID"
     $regValueName01 = "DeviceClientId"
     $DeviceClientID = (Get-Item $regKeyPath01 -EA Ignore).Property -contains $regValueName01
@@ -99,7 +99,7 @@ While($Continue) {
         $RDeviceClientID = "No"    
     }	
     
-    #Verification de l'agent SCCM
+    #Check SCCM Agent
     $SCCMService = (Get-Service -Name CcmExec).Status
 	Write-Host	"Récupération du status du service SCCM" -ForegroundColor Yellow
     if ($SCCMService -eq "Running")
@@ -111,7 +111,7 @@ While($Continue) {
         $RSCCMService = "No"  
 		}
 	
-    #Verification gestion Microsoft Intune
+    #Check Microsoft Intune service
     $INTUNEService = (Get-Service -Name IntuneManagementExtension).Status
 	Write-Host	"Recuperation du status du service MS Intune" -ForegroundColor Yellow
     if ($INTUNEService -eq "Running")
@@ -123,7 +123,7 @@ While($Continue) {
         $RIntuneService = "No"  
 		}
 	
-    #Verification de la presence du certificat MS Intune
+    #Check MS Intune certificate
     Write-Host	"Recuperation du status de certificat Intune" -ForegroundColor Yellow
     $CertDetailIntune = Get-ChildItem -Path 'Cert:\LocalMachine\My' –Recurse
     $CertDetailIntune | Select-Object @{n="Issuer";e={(($_.Issuer -split ",") |? {$_ -like "CN=*"}) -replace "CN="}}
@@ -160,22 +160,22 @@ While($Continue) {
     $report = New-Object psobject
     $report | Add-Member -MemberType NoteProperty -name "Date" -Value "$($Date)"
     $report | Add-Member -MemberType NoteProperty -name "Certificat MS Organization" -Value $ResultCertDetailMSOrganization
-    $report | Add-Member -MemberType NoteProperty -name "Device connecte au domaine" -Value $ResultAD
-    $report | Add-Member -MemberType NoteProperty -name "Device connecte a Azure AD" -Value $ResultAAD
-    $report | Add-Member -MemberType NoteProperty -name "Cle de registre JoinInfo" -Value $RJoinInfo 
-    $report | Add-Member -MemberType NoteProperty -name "Cle de registre DeviceClientID" -Value $RDeviceClientID
-    $report | Add-Member -MemberType NoteProperty -name "Etat Service SCCM" -Value $RSCCMService 
-    $report | Add-Member -MemberType NoteProperty -name "Etat Microsoft Intune" -Value $RIntuneService
-    $report | Add-Member -MemberType NoteProperty -name "Certificat MS Intune" -Value $ResultCertDetailIntune 
-    $report | Add-Member -MemberType NoteProperty -name "Configuration HAADJ" -Value $HAADJ
-    $report | Add-Member -MemberType NoteProperty -name "CoManagement SCCM Intune" -Value $CoMgnt 
+    $report | Add-Member -MemberType NoteProperty -name "Device connected to AD Domain" -Value $ResultAD
+    $report | Add-Member -MemberType NoteProperty -name "Device connected to Azure AD" -Value $ResultAAD
+    $report | Add-Member -MemberType NoteProperty -name "Registry Key JoinInfo" -Value $RJoinInfo 
+    $report | Add-Member -MemberType NoteProperty -name "Registry key DeviceClientID" -Value $RDeviceClientID
+    $report | Add-Member -MemberType NoteProperty -name "SCCM service Status" -Value $RSCCMService 
+    $report | Add-Member -MemberType NoteProperty -name "Microsoft Intune Service Status" -Value $RIntuneService
+    $report | Add-Member -MemberType NoteProperty -name "Check MS Intune certificate" -Value $ResultCertDetailIntune 
+    $report | Add-Member -MemberType NoteProperty -name "HAADJ Configuration" -Value $HAADJ
+    $report | Add-Member -MemberType NoteProperty -name "CoManagement State" -Value $CoMgnt 
     $report | export-csv -NoTypeInformation -Path $logfilepath -Delimiter ";" -Append
 
 #Notification pour l'admin
 If ($HAADJ -eq 'Yes' -and $CoMgnt -eq 'Yes')
 
     {
-    balloon "Bonjour $env:UserName" "Votre poste $Devicename est prêt !" 10000
+    balloon "Hello $env:UserName" "Your device $Devicename is ready !" 10000
     ($Continue = $false)
     }
         
