@@ -129,7 +129,7 @@ While($Continue) {
     $CertDetailIntune | Select-Object @{n="Issuer";e={(($_.Issuer -split ",") |? {$_ -like "CN=*"}) -replace "CN="}}
     $ResultCertDetailIntune = if ($CertDetailIntune -like "*Intune*") {"Yes"}else{"No"}
 	
-	#Verification du status Azure PRT
+    #Verification du status Azure PRT
     Write-Host "Check Azure PRT Status" -ForegroundColor Yellow
 	$AADPRT = $Domain | Where-Object {$_ -like "*AzureAdPrt : YES*"}
     $ResultAADPRT = if ($AADPRT) {"Yes"}else{"No"}
