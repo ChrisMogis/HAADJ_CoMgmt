@@ -53,7 +53,7 @@ While($Continue) {
     $CertDetailMS = Get-ChildItem -Path 'Cert:\LocalMachine\My' –Recurse
     $CertDetailMS | Select-Object @{n="Issuer";e={(($_.Issuer -split ",") |? {$_ -like "CN=*"}) -replace "CN="}}
     $CertDetailMSOrganization = ($CertDetailMS -like "*MS-Organization*").count
-    Write-Host "Vérification de la présence des certificats MS-Organization" -ForegroundColor Yellow
+    Write-Host "Check MS-Organization certificates" -ForegroundColor Yellow
     if ($CertDetailMSOrganization -eq '2')
         {
         $ResultCertDetailMSOrganization = "Yes"
@@ -66,12 +66,12 @@ While($Continue) {
     #Device Domain Join verification
     $AD = $Domain | Where-Object {$_ -like "*DomainJoined : Yes*"}
     $ResultAD = if ($AD) {"Yes"}else{"No"}
-	Write-Host "Verification de la connectivité à l'AD" -ForegroundColor Yellow
+	Write-Host "Check AD Join" -ForegroundColor Yellow
     
     #Search Device Azure AD Joined
     $AAD = $Domain | Where-Object {$_ -like "*AzureAdJoined : Yes*"}
     $ResultAAD = if ($AAD) {"Yes"}else{"No"}
-	Write-Host "Verification de la connectivité à l'AzureAD" -ForegroundColor Yellow
+	Write-Host "Check Azure AD Join" -ForegroundColor Yellow
 
     #JoinInfo registry key verification
     $JoinInfo = Test-Path -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CloudDomainJoin\JoinInfo"
@@ -159,16 +159,16 @@ While($Continue) {
     #Report
     $report = New-Object psobject
     $report | Add-Member -MemberType NoteProperty -name "Date" -Value "$($Date)"
-    $report | Add-Member -MemberType NoteProperty -name "Device connecte au domaine" -Value $ResultAD
-    $report | Add-Member -MemberType NoteProperty -name "Etat Service SCCM" -Value $RSCCMService 
-    $report | Add-Member -MemberType NoteProperty -name "Certificat MS Organization" -Value $ResultCertDetailMSOrganization
-    $report | Add-Member -MemberType NoteProperty -name "Device connecte a Azure AD" -Value $ResultAAD
-    $report | Add-Member -MemberType NoteProperty -name "Cle de registre JoinInfo" -Value $RJoinInfo 
-    $report | Add-Member -MemberType NoteProperty -name "Cle de registre DeviceClientID" -Value $RDeviceClientID
-    $report | Add-Member -MemberType NoteProperty -name "Certificat MS Intune" -Value $ResultCertDetailIntune 
-    $report | Add-Member -MemberType NoteProperty -name "Etat Microsoft Intune" -Value $RIntuneService
-    $report | Add-Member -MemberType NoteProperty -name "Configuration HAADJ" -Value $HAADJ
-    $report | Add-Member -MemberType NoteProperty -name "CoManagement SCCM Intune" -Value $CoMgnt 
+    $report | Add-Member -MemberType NoteProperty -name "Device connected to the Local Domain" -Value $ResultAD
+    $report | Add-Member -MemberType NoteProperty -name "SCCM Service State" -Value $RSCCMService 
+    $report | Add-Member -MemberType NoteProperty -name "MS Organization Certificates" -Value $ResultCertDetailMSOrganization
+    $report | Add-Member -MemberType NoteProperty -name "Device connected to Azure AD" -Value $ResultAAD
+    $report | Add-Member -MemberType NoteProperty -name "JoinInfo Registry Key" -Value $RJoinInfo 
+    $report | Add-Member -MemberType NoteProperty -name "DeviceClientID Registry Key" -Value $RDeviceClientID
+    $report | Add-Member -MemberType NoteProperty -name "MS Intune Certificate" -Value $ResultCertDetailIntune 
+    $report | Add-Member -MemberType NoteProperty -name "Microsoft Intune Service State" -Value $RIntuneService
+    $report | Add-Member -MemberType NoteProperty -name "HAADJ Device" -Value $HAADJ
+    $report | Add-Member -MemberType NoteProperty -name "CoManaged Device" -Value $CoMgnt 
     $report | export-csv -NoTypeInformation -Path $logfilepath -Delimiter ";" -Append
 
 #Notification pour l'admin
